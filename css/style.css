@@ -51,12 +51,50 @@ code {
   font-size: 80%;
 }
 a[href^="http://"]{
-  color: red;
+  color: #a00;
   text-decoration: underline;
 }
 a[href^="javascript:"]{
-  color: blue;
+  color: #00f;
   text-decoration: none;
+}
+/*!
+ * Bootstrap v2.0.0
+ *
+ * Copyright 2012 Twitter, Inc
+ * Licensed under the Apache License v2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Designed and built with all the love in the world @twitter by @mdo and @fat.
+ */
+.label {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  padding: 1px 3px 2px;
+  font-size: 10pt;
+  color: #ffffff;
+  background-color: #999999;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+}
+.label-important {
+  background-color: #b94a48;
+}
+.label-warning {
+  background-color: #f89406;
+}
+.label-success {
+  background-color: #468847;
+}
+.label-info {
+  background-color: #3a87ad;
+}
+.figure {
+  max-width: 100%;
+  border: 1px solid #ddd;
+  -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075);
+  -moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075);
 }
 A:hover {text-decoration: underline}
 .headerbox {

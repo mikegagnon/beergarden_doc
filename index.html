@@ -22,8 +22,309 @@
       <div class='column' id="column0"></div>
     </div>
     <div class="content-storage">
+<div id='emergencysettings'>
+<h2>Emergency server settings</h2>
+<p>Have a server / app config designed for high-density overloads.</p>
+<ul>
+<li>Give logged-in users preferential treatement, etc.</li>
+<li>Decrease the size of the thread pool (on the order of 1 thread per CPU core)</li>
+<li>Increase timeouts (e.g. 200ms)</li>
+</ul>
+<p>Manually switch to emergency config when needed.</p>
+<p>This idea is similar to <a href="javascript:Sidenote.openColumn('#emergencysettings','#approxbg','approximating%20Beer%20Garden')">approximating Beer Garden</a>.</p>
+</div>
+
+<div id='archfigure'>
+<h2>Figure: Implementation architecture</h2>
+<p><img src="img/arch.png" class="figure"></p>
+</div>
+
+<div id='doorman'>
+<h2>The Doorman</h2>
+<p>The Doorman limits the attack rate by charging each request an "admission fee."</p>
+<h2>Mechanism</h2>
+<ul>
+<li>The Doorman is implemented as an admission controller for the Nginx web server.</li>
+<li>The Doorman does nothing during normal operation.</li>
+<li>When the server is overloaded the Doorman immediately responds to client requests with a <a href="">JavaScript math problem</a><ul>
+<li>Like a <a href="">captcha</a>, but the client's browser automatically computes the solution to the math problem.</li>
+<li>Once the browser finishes, it resends its original request along with a solution to the math problem.</li>
+<li>The Doorman verifies that the solution to the problem is correct, and then forwards the request to the <a href="##bouncer">load balancer</a></li>
+</ul>
+</li>
+</ul>
+<h2>Why does this slow down the attacker?</h2>
+<ul>
+<li>If it takes 5 seconds for a broswer to solve a math problem, and the attacker only has one computer, then the attacker can send only one malicious request every 5 seconds.</li>
+<li>See how the Doorman fits into <a href="javascript:Sidenote.openColumn('#doorman','#intheory','the%20theory%20of%20Beer%20Garden')">the theory of Beer Garden</a>.</li>
+</ul>
+</div>
+
+<div id='approxbg'>
+<h2>Approximate Beer Garden</h2>
+<ul>
+<li>Easy to implement application-specific approximation of Beer Garden </li>
+<li>Approximate Signature Service<ul>
+<li>Heuristically detect high-density requests</li>
+</ul>
+</li>
+<li>Approximate Doorman: try to allocate resources "securely"<ul>
+<li>Give logged in users preference</li>
+<li>Each "identity" (IP address or username) gets certain number of requests per minute</li>
+<li>Give non-suspicious requests preferential treatment. For example:<ul>
+<li>Quarantine suspicious requests: if you have 10 backend machines, send the suspicious requests to 1 designated backend. Send all other requests to the remaining 9.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Approximate Bouncer<ul>
+<li>During overloads increase aggressiveness of timeouts</li>
+</ul>
+</li>
+</ul>
+</div>
+
+<div id='sigservice'>
+<h2>Signature Service</h2>
+<p>todo</p>
+</div>
+
+<div id='density'>
+<h2>The <em>density</em> of DoS attacks</h2>
+<p>Density is a characertistic of resource-consumption attacks:</p>
+<ul>
+<li><strong>Mass</strong> measures the victim's resource consumption.</li>
+<li><strong>Volume</strong> measures the number of malicious resource requests</li>
+<li><strong>Density measures</strong> the amount of victim <a href="javascript:Sidenote.openColumn('#density','#densityequivalence','resources%20consumed%20per%20malicious%20request')">resources consumed per malicious request</a>.</li>
+</ul>
+<p><a href="javascript:Sidenote.openColumn('#density','#highdensityattacks','High-density%20attacks')">High-density attacks</a> are more threatening than <a href="javascript:Sidenote.openColumn('#density','#lowdensityattacks','low-density%20attacks')">low-density attacks</a>.</p>
+</div>
+
+<div id='backupalgorithms'>
+<h2>Backup algoritms</h2>
+<ul>
+<li>When overload occurs flip a switch that replaces poor-worst case algorithms with good worst-case algorithms</li>
+<li>What kind of algorithms?<ul>
+<li>Approximate algorithms</li>
+<li>Algorithms that are less complete</li>
+<li>Algorithms that have poor average-case performance</li>
+<li>Algorithms that exhibit worst-case performance under different conditions</li>
+</ul>
+</li>
+</ul>
+</div>
+
+<div id='experimentalattacks'>
+<h2>Experimental attacks</h2>
+</div>
+
+<div id='otherdefensiveideas'>
+<h2>Other defensive ideas</h2>
+<ul>
+<li><a href="javascript:Sidenote.openColumn('#otherdefensiveideas','#emergencysettings','Emergency%20server%20settings')">Emergency server settings</a></li>
+<li><a href="javascript:Sidenote.openColumn('#otherdefensiveideas','#backupalgorithms','Backup%20algorithms')">Backup algorithms</a></li>
+<li><a href="javascript:Sidenote.openColumn('#otherdefensiveideas','#randomizedalgorithms','Randomized%20algorithms')">Randomized algorithms</a></li>
+<li><a href="javascript:Sidenote.openColumn('#otherdefensiveideas','#approxbg','Approximate%20Beer%20Garden')">Approximate Beer Garden</a></li>
+<li><a href="javascript:Sidenote.openColumn('#otherdefensiveideas','#perfisolation','Performance%20isolation')">Performance isolation</a></li>
+</ul>
+</div>
+
+<div id='bouncer'>
+<h2>The Bouncer</h2>
+<p>The Bouncer evicts old requests to make room for new requests.</p>
+<h2>Mechanism</h2>
+<ul>
+<li>The Bouncer is implemented in two places:<ol>
+<li>The <a href="">load balancer</a> in the Nginix web server, which keeps track of each request in the web application.</li>
+<li>An independent process that restarts FastCGI servers (when the load balancer requests it).</li>
+</ol>
+</li>
+<li>If the load balancer receives a request, but the worker pool is full, then it:<ol>
+<li>evicts the request that has been in the server the longest, and</li>
+<li>sends the new request to a <strong>spare worker</strong>.</li>
+</ol>
+</li>
+</ul>
+<h2>Why does this help legitimate clients?</h2>
+<ul>
+<li>Legitimate requests tend to finish quickly.</li>
+<li>Malicious requests finish slowly (or maybe even never).</li>
+<li>Therefore malicious requests are more likely to be evicted.
+See how the Doorman fits into <a href="javascript:Sidenote.openColumn('#bouncer','#intheory','the%20theory%20of%20Beer%20Garden')">the theory of Beer Garden</a>.</li>
+</ul>
+</div>
+
+<div id='perfisolation'>
+<h2>Performance isolation</h2>
+<ul>
+<li>Instead of embedding "dangerous" algorithms in application code, put each in a separate service.<ul>
+<li>E.g. a "quicksort" service</li>
+</ul>
+</li>
+<li>If that service gets overloaded, then that feature is no longer available<ul>
+<li>But everything else should work</li>
+<li>Application should be developed to gracefully handle crashed services</li>
+</ul>
+</li>
+<li>Linux containers could be useful here.</li>
+</ul>
+</div>
+
+<div id='overviewfigure'>
+<h2>Figure: Beer Garden's overall strategy</h2>
+<p><img src="img/overview.png" class="figure"></p>
+</div>
+
+<div id='lowdensityattacks'>
+<h2>Low-density attacks</h2>
+<p>In a low-<a href="javascript:Sidenote.openColumn('#lowdensityattacks','#density','density')">density</a> attack, the attacker consumes a massive amount of victim resources by flooding the victim with a large volume of resource requests.</p>
+<p>In a way, low-density attacks are the <strong>opposite</strong> of <a href="javascript:Sidenote.openColumn('#lowdensityattacks','#highdensityattacks','high-density%20attacks')">high-density attacks</a>.</p>
+<h3>Low-density attacks:</h3>
+<ul>
+<li>are <a href="">conventional</a></li>
+<li>are <a href="">less powerful</a></li>
+<li>are <a href="">less economical</a></li>
+<li>are <a href="">noisy</a></li>
+<li>must <a href="">exploit generic vulnerabilities</a></li>
+<li>are <a href="">less sophisticated</a></li>
+<li>are <a href="">more recyclable</a></li>
+</ul>
+</div>
+
+<div id='randomizedalgorithms'>
+<h2>Randomized algorithms</h2>
+<ul>
+<li>Let's say you must always use an algorithm that has bad worst-case performance</li>
+<li>Is it easy to intentionally trigger worst-case performance?</li>
+<li>Can you make it hard to intentionally trigger worst-case performance?</li>
+<li>Examples:<ul>
+<li>Shuffle before quicksort</li>
+<li>Randomize hash seed</li>
+</ul>
+</li>
+</ul>
+</div>
+
+<div id='densityequivalence'>
+<p>Which, equivalently, is the ratio of mass to volume.</p>
+</div>
+
+<div id='experiments'>
+<h2>Experiments</h2>
+<h3>Simple attacks</h3>
+<p>Did not try to evade Beer Garden.</p>
+<ol>
+<li><span class="label label-success">Defensive success</span> <a href="">Diff attack</a> against <a href="">MediaWiki</a>.</li>
+<li><span class="label label-success">Defensive success</span> <a href="">Regex attack</a> against <a href="">Django</a>.</li>
+<li><span class="label label-important">Defensive failure</span> <a href="">Infinite loop</a> against <a href="">Solr</a>.</li>
+<li><span class="label label-warning">Defensive moderate</span> <a href="">Slow repo</a> against <a href="">Redmine</a>.</li>
+<li><span class="label label-warning">Defensive moderate</span> <a href="">Flood attack</a> against <a href="javascript:Sidenote.openColumn('#experiments','#doorman','the%20Doorman')">the Doorman</a>.</li>
+</ol>
+<h3>Sophisticated attacks</h3>
+<p>Attempted to evade Beer Garden.</p>
+<ol>
+<li><span class="label label-warning">Defensive moderate</span> <a href="">SQL overload</a> against <a href="">MySQL</a>.</li>
+<li><span class="label label-important">Defensive failure</span> <a href="">HashDoS sneak attack</a> against <a href="">PHP</a>.</li>
+<li><span class="label label-important">Defensive failure</span> <a href="">Infected transclusion</a> against <a href="">MediaWiki</a>.</li>
+<li><span class="label label-important">Defensive failure</span> <a href="">Infected job queue</a> against <a href="">MediaWiki</a>.</li>
+<li><span class="label label-important">Defensive failure</span> <a href="">XSS DDoS</a> against <a href="">OSQA</a>.</li>
+</ol>
+</div>
+
+<div id='intheory'>
+<h2>Theory</h2>
+<p><a href="javascript:Sidenote.openColumn('#intheory','#overviewfigure','Illustration')">Illustration</a>.</p>
+<ol>
+<li>Charging an <a href="javascript:Sidenote.openColumn('#intheory','#doorman','admission%20fee')">admission fee</a> limits the rate by which an individual computer can submit requests.</li>
+<li>If:<ol>
+<li>the attacker is using a small number of computers, and</li>
+<li>legitimate users are using a large number of computers,</li>
+<li><strong>then</strong> legitimtate requests will be admitted more often.</li>
+</ol>
+</li>
+<li>Legitimate requests will tend to finish quickly.</li>
+<li>Malicious requests will finish slowly (or maybe even never).</li>
+<li>If a request arrives and the server is 100% full, do not enqueue the request.<ul>
+<li>Rather, evict the request that has been in the server the longest.</li>
+<li>This request will most likely be malicious.</li>
+<li>This keeps the request queue empty and bounds the worker-pool size.</li>
+</ul>
+</li>
+<li>Since:<ol>
+<li>evicted requests are more likely to be evicted, and</li>
+<li>legitimate requests are more likely to be admitted,</li>
+<li><strong>then</strong> legitimate users receive preferential treatment.</li>
+</ol>
+</li>
+</ol>
+</div>
+
+<div id='highdensityattacks'>
+<h2>High-density attacks</h2>
+<p>A high-<a href="javascript:Sidenote.openColumn('#highdensityattacks','#density','density')">density</a> attack is a DoS attack where each individual request consumes a disproportionate amount of resources.</p>
+<p>In a way, high-density attacks are the <strong>opposite</strong> of <a href="javascript:Sidenote.openColumn('#highdensityattacks','#lowdensityattacks','low-density%20attacks')">low-density attacks</a>.</p>
+<h3>High-density attacks:</h3>
+<ul>
+<li>are <a href="">unconventional</a></li>
+<li>are <a href="">powerful</a></li>
+<li>are <a href="">economical</a></li>
+<li>are <a href="">stealthy</a></li>
+<li>must <a href="">exploit specific vulnerabilities</a></li>
+<li><a href="">require specialized development</a></li>
+<li>are often <a href="">sophisticated</a></li>
+<li>are <a href="">less recyclable</a></li>
+</ul>
+<h3>Well known examples:</h3>
+<ul>
+<li><a href="">Algorithmic complexity attacks</a></li>
+<li><a href="">HashDos</a></li>
+<li><a href="">Floating-point infinite loop</a></li>
+<li><a href="">Zip bomb</a></li>
+</ul>
+</div>
+
+<div id='testapplications'>
+<h2>Test applications</h2>
+<ul>
+<li><a href="">MediaWiki</a>, implemented in PHP </li>
+<li><a href="">OSQA</a>, implemented in Python / Django</li>
+<li><a href="">Redmine</a>, implemented in Ruby on Rails</li>
+<li><a href="">Solr</a>, implemented in Java</li>
+</ul>
+</div>
+
 <div id='main'>
-<p>Foo</p>
+<p><strong>Beer Garden</strong> defends web applications against <em>high-density</em> DoS attacks.</p>
+<p>A <a href="javascript:Sidenote.openColumn('#main','#highdensityattacks','high-density%20attack')">high-density attack</a> is a DoS attack where each individual request consumes a disproportionate amount of resources.
+They are more threatening than <a href="javascript:Sidenote.openColumn('#main','#lowdensityattacks','conventional%20DoS%20attacks')">conventional DoS attacks</a>.</p>
+<p>Beer Garden treats the server like a crowded "beer garden" (see <a href="javascript:Sidenote.openColumn('#main','#overviewfigure','illustration%20of%20concept')">illustration of concept</a> and <a href="javascript:Sidenote.openColumn('#main','#archfigure','illustration%20of%20architecture')">illustration of architecture</a>):</p>
+<ul>
+<li><a href="javascript:Sidenote.openColumn('#main','#doorman','The%20Doorman')">The Doorman</a> limits the attack rate by charging each request an "admission fee.""</li>
+<li><a href="javascript:Sidenote.openColumn('#main','#bouncer','The%20Bouncer')">The Bouncer</a> evicts old requests to make room for new requests.</li>
+<li>A <a href="javascript:Sidenote.openColumn('#main','#sigservice','Signature%20Service')">Signature Service</a> develops signatures for high-density requests, which helps the Doorman charge greater admission fees for suspicious requests.</li>
+</ul>
+<p><a href="javascript:Sidenote.openColumn('#main','#intheory','In%20theory')">In theory</a>, such a defense gives legitimate users preferential treatment as long as their aggregate computational resources outweigh the attacker's.</p>
+<p>In our experiments, <a href="javascript:Sidenote.openColumn('#main','#experiments','Beer%20Garden%20was%20moderately%20successful')">Beer Garden was moderately successful</a> at defending <a href="javascript:Sidenote.openColumn('#main','#testapplications','several%20web%20applications')">several web applications</a> against a variety of attacks.</p>
+<p>We conclude that <a href="javascript:Sidenote.openColumn('#main','#conclusion','the%20Beer%20Garden%20approach%20is%20effective%20in%20many%20circumstances')">the Beer Garden approach is effective in many circumstances</a>), and we identify <a href="javascript:Sidenote.openColumn('#main','#futurework','future%20work')">future work</a> that could further improve its defensive capability.</p>
+<p>We have also identified <a href="javascript:Sidenote.openColumn('#main','#otherdefensiveideas','several%20simple%20techniques')">several simple techniques</a> you can use in lieu of Beer Garden to protect your web applications from high-density attacks.</p>
+<p>By <a href="mailto:mikegagnon@gmail.com">Mike Gagnon</a> and <a href="mailto:ivan.balepin@gmail.com">Ivan Balepin</a>.</p>
+<p>This document was created using <a href="javascript:Sidenote.openColumn('#main','#sidenote','Sidenote')">Sidenote</a>.</p>
+</div>
+
+<div id='conclusion'>
+<h2>Conclusions</h2>
+<ol>
+<li>Promising approach</li>
+<li>Simpler solutions are effective</li>
+<li>Difficult to develop a single portable solution</li>
+<li>Application-specific bouncers will be better</li>
+<li>Reducing thread-pool size during attack will be better</li>
+<li>JS puzzles won't stop DDoS<ul>
+<li>Instead, use application-specific rate-limiting</li>
+<li>e.g. rate limit according to username</li>
+</ul>
+</li>
+</ol>
 </div>
     </div>
   </body>

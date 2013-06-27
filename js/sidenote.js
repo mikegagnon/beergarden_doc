@@ -16,7 +16,7 @@
 
 var Sidenote = {
 
-  num_visible_columns: 3,
+  num_visible_columns: 2,
 
   min_column_width: 50,
 
@@ -398,6 +398,19 @@ var Sidenote = {
 
   },
 
+  /**
+   * dropping all items in nav_stack that appear after lastPageId, then
+   * push newPageId on to the stack.
+   */
+  dropAndPushNavStack: function(lastPageId, newPageId) {
+    var numNavStackItemsToKeep = Sidenote.getNavStackIndex(lastPageId) + 1
+
+    Sidenote.nav_stack = _(Sidenote.nav_stack)
+      .take(numNavStackItemsToKeep)
+      .value()
+
+    Sidenote.nav_stack.push(newPageId)
+  },
 
   /**
    * Every time the user clicks a Sidenote link, this function is called to
@@ -433,30 +446,15 @@ var Sidenote = {
     }
     // if the click comes from one of the left columns
     else if (fromColumnLocation < Sidenote.num_visible_columns - 1) {
-
-      /**
-       * a click form the left column results in dropping all items in
-       * nav_stack that appear after the left column, then pushing toPageId
-       * on to the stack
-       */
-
-      var numNavStackItemsToKeep = Sidenote.getNavStackIndex(fromPageId) + 1
-
-      Sidenote.nav_stack = _(Sidenote.nav_stack)
-        .take(numNavStackItemsToKeep)
-        .value()
-
-      Sidenote.nav_stack.push(toPageId)
-
+      Sidenote.dropAndPushNavStack(fromPageId, toPageId)
       Sidenote.animateReplaceColumn(fromColumnLocation + 1, toPageId)
     }
     // if the click comes from the right column and isn't already in the 
     // breadcrumbs
     else {
-      Sidenote.nav_stack.push(toPageId)
+      Sidenote.dropAndPushNavStack(fromPageId, toPageId)
       Sidenote.left_column_index += 1
       Sidenote.animateSlideLeft([toPageId])
-      
     }
 
     if (!(toPageId in Sidenote.columnTitle)) {
