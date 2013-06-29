@@ -13,7 +13,7 @@ Beer Garden treats the server like a crowded "beer garden" (see [illustration of
 
 In our experiments, [Beer Garden was moderately successful](##experiments) at defending [several web applications](##testapplications) against a variety of attacks.
 
-We conclude that [the Beer Garden approach is effective in many circumstances](##conclusion)), and we identify [future work](##futurework) that could further improve its defensive capability.
+We conclude that [the Beer Garden approach is effective in many circumstances](##conclusion), and we identify [future work](##futurework) that could further improve its defensive capability.
 
 We have also identified [several simple techniques](##otherdefensiveideas) you can use in lieu of Beer Garden to protect your web applications from high-density attacks.
 
