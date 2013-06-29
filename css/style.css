@@ -54,6 +54,10 @@ a[href^="http://"]{
   color: #a00;
   text-decoration: underline;
 }
+a[href^="https://"]{
+  color: #a00;
+  text-decoration: underline;
+}
 a[href^="javascript:"]{
   color: #00f;
   text-decoration: none;
